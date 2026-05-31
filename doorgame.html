@@ -294,7 +294,7 @@
             <h1 class="text-[clamp(2rem,5vw,4rem)] font-bold mb-2 animate-glow-flash">
                 🚪 虚空金币门
             </h1>
-            <p class="text-gray-400 text-lg">踏入虚空，获取被诅咒的金币！</p>
+            <p class="text-gray-400 text-lg">踏入虚空，获取被祝福的金币！</p>
         </header>
 
         <!-- 游戏开始界面 -->
@@ -307,7 +307,7 @@
                     <p>✅ 连续点击同一个门第二次才会揭示金币数</p>
                     <p>✅ 揭示金币需要消耗 <span class="text-red-400 font-bold">1次</span> 点击次数</p>
                     <p>✅ 揭示后每次点击该门都会获得相同数量的金币</p>
-                    <p>✅ 目标：用100次点击获取最多的被诅咒金币！</p>
+                    <p>✅ 目标：用100次点击获取最多的被祝福的金币！</p>
                 </div>
             </div>
 
@@ -694,7 +694,7 @@
                 // 播放获得金币音效
                 DarkAudio.playCoin();
 
-                elements.gameHint.textContent = `获得 ${coins} 被诅咒的金币！`;
+                elements.gameHint.textContent = `获得 ${coins} 被祝福的金币！`;
 
                 // 金币弹出效果
                 const coinElement = doorElement.querySelector('.door-coin');
@@ -734,7 +734,7 @@
             // 获得第一次金币
             gameState.currentCoins += coins;
 
-            elements.gameHint.textContent = `虚空之门 ${doorIndex + 1} 每次点击获得 ${coins} 被诅咒的金币！`;
+            elements.gameHint.textContent = `虚空之门 ${doorIndex + 1} 每次点击获得 ${coins} 被赐福的金币！`;
 
             // 创建暗黑烟花效果
             createDarkFirework(doorElement.offsetLeft + doorElement.offsetWidth / 2, doorElement.offsetTop + doorElement.offsetHeight / 2);
@@ -783,7 +783,7 @@
             } else if (gameState.currentCoins >= 400) {
                 resultMessage = '不错的成绩！继续探索虚空的奥秘！';
             } else {
-                resultMessage = '虚空吞噬了你的大部分机会，再试一次吧！';
+                resultMessage = '虚空吞噬了你，再试一次吧！';
             }
 
             elements.gameResult.textContent = resultMessage;
