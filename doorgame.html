@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虚空金币门 - 暗黑策略点击游戏</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        void: '#1a0a2e',
+                        voidDark: '#0d0517',
+                        voidLight: '#6a0dad',
+                        voidGlow: '#9932cc',
+                        cursedGold: '#b8860b',
+                        dark: '#05030a',
+                        darker: '#020105',
+                    },
+                    fontFamily: {
+                        pixel: ['"Press Start 2P"', 'monospace'],
+                    },
+                    animation: {
+                        'void-pulse': 'voidPulse 3s ease-in-out infinite',
+                        'void-rotate': 'voidRotate 8s linear infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'shake': 'shake 0.5s ease-in-out',
+                        'coin-pop': 'coinPop 0.6s ease-out',
+                        'dark-firework': 'darkFirework 1.2s ease-out forwards',
+                        'mist-float': 'mistFloat 6s ease-in-out infinite',
+                        // 新增：彩色闪烁发光动画
+                        'glow-flash': 'glowFlash 1.5s steps(1) infinite',
+                        'glow-flash-delay-1': 'glowFlash 1.5s steps(1) 0.25s infinite',
+                        'glow-flash-delay-2': 'glowFlash 1.5s steps(1) 0.5s infinite',
+                    },
+                    keyframes: {
+                        voidPulse: {
+                            '0%, 100%': {
+                                boxShadow: '0 0 20px #6a0dad, 0 0 40px #3d0c66, inset 0 0 30px #000000',
+                                transform: 'scale(1)'
+                            },
+                            '50%': {
+                                boxShadow: '0 0 35px #9932cc, 0 0 70px #6a0dad, inset 0 0 40px #000000',
+                                transform: 'scale(1.02)'
+                            },
+                        },
+                        voidRotate: {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        shake: {
+                            '0%, 100%': { transform: 'rotate(0deg)' },
+                            '25%': { transform: 'rotate(-5deg)' },
+                            '75%': { transform: 'rotate(5deg)' },
+                        },
+                        coinPop: {
+                            '0%': { transform: 'scale(0) rotate(0deg)', opacity: '0' },
+                            '50%': { transform: 'scale(1.2) rotate(180deg)', opacity: '1' },
+                            '100%': { transform: 'scale(1) rotate(360deg)', opacity: '1' },
+                        },
+                        darkFirework: {
+                            '0%': { transform: 'scale(0)', opacity: '1' },
+                            '100%': { transform: 'scale(1.8)', opacity: '0' },
+                        },
+                        mistFloat: {
+                            '0%, 100%': {
+                                transform: 'translateY(0) translateX(0)',
+                                opacity: '0.3'
+                            },
+                            '33%': {
+                                transform: 'translateY(-15px) translateX(10px)',
+                                opacity: '0.5'
+                            },
+                            '66%': {
+                                transform: 'translateY(-5px) translateX(-10px)',
+                                opacity: '0.4'
+                            },
+                        },
+                        // 新增：彩色闪烁发光关键帧（6种不同颜色循环）
+                        glowFlash: {
+                            '0%': { textShadow: '0 0 10px #9932cc, 0 0 20px #6a0dad, 0 0 30px #3d0c66' },
+                            '16%': { textShadow: '0 0 10px #00ffff, 0 0 20px #0088ff, 0 0 30px #0044aa' },
+                            '33%': { textShadow: '0 0 10px #00ff00, 0 0 20px #00cc00, 0 0 30px #008800' },
+                            '50%': { textShadow: '0 0 10px #ffff00, 0 0 20px #ffcc00, 0 0 30px #ff9900' },
+                            '66%': { textShadow: '0 0 10px #ff6600, 0 0 20px #ff3300, 0 0 30px #cc0000' },
+                            '83%': { textShadow: '0 0 10px #ff0066, 0 0 20px #ff0099, 0 0 30px #cc0066' },
+                            '100%': { textShadow: '0 0 10px #9932cc, 0 0 20px #6a0dad, 0 0 30px #3d0c66' },
+                        }
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .box-shadow-void {
+                box-shadow: 0 0 15px #6a0dad, 0 0 30px #3d0c66;
+            }
+            .pixel-border {
+                border: 4px solid;
+                border-image: linear-gradient(45deg, #6a0dad, #9932cc) 1;
+            }
+            .pixel-btn {
+                position: relative;
+                border: none;
+                background: linear-gradient(45deg, #3d0c66, #6a0dad);
+                color: white;
+                padding: 12px 24px;
+                font-size: 16px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                clip-path: polygon(
+                    10px 0%, calc(100% - 10px) 0%, 100% 10px, 
+                    100% calc(100% - 10px), calc(100% - 10px) 100%, 
+                    10px 100%, 0% calc(100% - 10px), 0% 10px
+                );
+            }
+            .pixel-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 0 20px rgba(106, 13, 173, 0.7), 0 0 40px rgba(153, 50, 204, 0.5);
+            }
+            .pixel-btn:active {
+                transform: scale(0.98);
+            }
+            .door {
+                position: relative;
+                width: 180px;
+                height: 280px;
+                background: radial-gradient(circle, #000000 0%, #1a0a2e 40%, #3d0c66 70%, transparent 100%);
+                border-radius: 50%;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                overflow: hidden;
+                animation: voidPulse 3s ease-in-out infinite;
+            }
+            .door::before {
+                content: '';
+                position: absolute;
+                top: -10px;
+                left: -10px;
+                right: -10px;
+                bottom: -10px;
+                border-radius: 50%;
+                border: 3px solid rgba(153, 50, 204, 0.5);
+                border-top-color: transparent;
+                animation: voidRotate 8s linear infinite;
+            }
+            .door::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="%236a0dad" stroke-width="1" opacity="0.3"/></svg>');
+                background-size: 50px 50px;
+                opacity: 0.2;
+                animation: mistFloat 6s ease-in-out infinite;
+            }
+            .door:hover {
+                transform: translateY(-5px) scale(1.05);
+                box-shadow: 0 0 40px #9932cc, 0 0 80px #6a0dad, inset 0 0 50px #000000;
+            }
+            .door-portal {
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                right: 20px;
+                bottom: 20px;
+                border-radius: 50%;
+                background: radial-gradient(circle, #000000 30%, #1a0a2e 60%, transparent 100%);
+                z-index: 1;
+            }
+            .door-number {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 64px;
+                color: white; /* 改为白色让发光效果更明显 */
+                z-index: 2;
+                font-weight: bold;
+            }
+            .door-revealed {
+                background: radial-gradient(circle, #000000 0%, #2d0a4e 40%, #5a0d99 70%, transparent 100%);
+                box-shadow: 0 0 40px #9932cc, 0 0 80px #6a0dad, inset 0 0 50px #000000;
+            }
+            .door-revealed::before {
+                border-color: rgba(153, 50, 204, 0.8);
+                border-top-color: transparent;
+            }
+            .particle {
+                position: absolute;
+                pointer-events: none;
+                border-radius: 2px;
+            }
+            .firework-particle {
+                position: absolute;
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                pointer-events: none;
+            }
+            .coin-icon {
+                display: inline-block;
+                width: 24px;
+                height: 24px;
+                background: radial-gradient(circle, #b8860b, #8b4513);
+                border-radius: 50%;
+                border: 2px solid #5c2a0d;
+                box-shadow: 0 0 10px rgba(184, 134, 11, 0.7);
+                text-align: center;
+                line-height: 20px;
+                font-weight: bold;
+                color: #3d1a07;
+                margin-right: 5px;
+            }
+            .stats-panel {
+                background: rgba(13, 5, 23, 0.85);
+                backdrop-filter: blur(10px);
+                border: 2px solid rgba(106, 13, 173, 0.5);
+                border-radius: 10px;
+                padding: 20px;
+            }
+            .leaderboard-item {
+                background: rgba(106, 13, 173, 0.05);
+                border-left: 3px solid #6a0dad;
+                padding: 10px 15px;
+                margin-bottom: 8px;
+                transition: all 0.3s ease;
+            }
+            .leaderboard-item:hover {
+                background: rgba(106, 13, 173, 0.1);
+                transform: translateX(5px);
+            }
+            .game-over-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.5s ease;
+            }
+            .game-over-overlay.active {
+                opacity: 1;
+                pointer-events: all;
+            }
+            .game-over-panel {
+                background: linear-gradient(135deg, #0d0517, #1a0a2e);
+                border: 3px solid #6a0dad;
+                border-radius: 15px;
+                padding: 40px;
+                text-align: center;
+                max-width: 500px;
+                transform: scale(0.8);
+                transition: transform 0.5s ease;
+            }
+            .game-over-overlay.active .game-over-panel {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-dark text-white min-h-screen overflow-x-hidden">
+    <!-- 背景网格 -->
+    <div class="fixed inset-0 z-0 opacity-5"
+        style="background-image: linear-gradient(#3d0c66 1px, transparent 1px), linear-gradient(90deg, #3d0c66 1px, transparent 1px); background-size: 50px 50px;">
+    </div>
+
+    <!-- 粒子容器 -->
+    <div id="particle-container" class="fixed inset-0 z-10 pointer-events-none"></div>
+
+    <!-- 烟花容器 -->
+    <div id="firework-container" class="fixed inset-0 z-20 pointer-events-none"></div>
+
+    <!-- 主容器 -->
+    <div class="relative z-30 container mx-auto px-4 py-8">
+        <!-- 游戏标题 -->
+        <header class="text-center mb-12">
+            <h1 class="text-[clamp(2rem,5vw,4rem)] font-bold mb-2 animate-glow-flash">
+                🚪 虚空金币门
+            </h1>
+            <p class="text-gray-400 text-lg">踏入虚空，获取被诅咒的金币！</p>
+        </header>
+
+        <!-- 游戏开始界面 -->
+        <div id="start-screen" class="max-w-3xl mx-auto text-center">
+            <div class="stats-panel mb-8">
+                <h2 class="text-2xl font-bold text-voidLight mb-6">游戏规则</h2>
+                <div class="text-left space-y-4 text-gray-300">
+                    <p>✅ 你有 <span class="text-voidGlow font-bold">100次</span> 点击机会</p>
+                    <p>✅ 第一次点击虚空之门不会显示金币数量</p>
+                    <p>✅ 连续点击同一个门第二次才会揭示金币数</p>
+                    <p>✅ 揭示金币需要消耗 <span class="text-red-400 font-bold">1次</span> 点击次数</p>
+                    <p>✅ 揭示后每次点击该门都会获得相同数量的金币</p>
+                    <p>✅ 目标：用100次点击获取最多的被诅咒金币！</p>
+                </div>
+            </div>
+
+            <button id="start-btn" class="pixel-btn text-xl px-12 py-4 font-bold">
+                ▶️ 开始游戏
+            </button>
+
+            <!-- 排行榜 -->
+            <div class="stats-panel mt-12">
+                <h3 class="text-xl font-bold text-voidLight mb-4">
+                    🏆 排行榜
+                </h3>
+                <div id="leaderboard" class="text-left">
+                    <div class="leaderboard-item">
+                        <span class="text-gray-400">暂无记录</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏进行界面 -->
+        <div id="game-screen" class="hidden">
+            <!-- 游戏状态栏 -->
+            <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
+                <div class="stats-panel flex items-center gap-6">
+                    <div>
+                        <span class="text-gray-400">剩余点击：</span>
+                        <span id="clicks-left" class="text-2xl font-bold animate-glow-flash-delay-1">100</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">当前金币：</span>
+                        <span id="current-coins" class="text-2xl font-bold animate-glow-flash-delay-2">0</span>
+                    </div>
+                </div>
+
+                <button id="end-btn" class="pixel-btn">
+                    ⏹️ 结束游戏
+                </button>
+            </div>
+
+            <!-- 门区域 -->
+            <div class="flex flex-wrap justify-center gap-8 mb-12">
+                <!-- 门1 -->
+                <div class="door" id="door-1" data-door="1">
+                    <div class="door-portal"></div>
+                    <div class="door-number animate-glow-flash">1</div>
+                    <div class="absolute bottom-8 left-0 right-0 text-center z-10">
+                        <span class="door-coin text-xl font-bold text-cursedGold hidden">
+                            <span class="coin-icon">$</span>
+                            <span class="coin-value">0</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 门2 -->
+                <div class="door" id="door-2" data-door="2">
+                    <div class="door-portal"></div>
+                    <div class="door-number animate-glow-flash-delay-1">2</div>
+                    <div class="absolute bottom-8 left-0 right-0 text-center z-10">
+                        <span class="door-coin text-xl font-bold text-cursedGold hidden">
+                            <span class="coin-icon">$</span>
+                            <span class="coin-value">0</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 门3 -->
+                <div class="door" id="door-3" data-door="3">
+                    <div class="door-portal"></div>
+                    <div class="door-number animate-glow-flash-delay-2">3</div>
+                    <div class="absolute bottom-8 left-0 right-0 text-center z-10">
+                        <span class="door-coin text-xl font-bold text-cursedGold hidden">
+                            <span class="coin-icon">$</span>
+                            <span class="coin-value">0</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 游戏提示 -->
+            <div class="text-center">
+                <p id="game-hint" class="text-lg text-gray-400">点击任意虚空之门开始探索！</p>
+            </div>
+        </div>
+
+        <!-- 游戏结束界面 -->
+        <div id="game-over-overlay" class="game-over-overlay">
+            <div class="game-over-panel">
+                <h2 class="text-3xl font-bold animate-glow-flash mb-4">游戏结束！</h2>
+                <div class="text-6xl font-bold animate-glow-flash-delay-1 mb-6">
+                    <span id="final-coins">0</span>
+                    <span class="text-2xl ml-2">金币</span>
+                </div>
+                <p id="game-result" class="text-lg text-gray-300 mb-8"></p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button id="restart-btn" class="pixel-btn">
+                        🔄 再玩一次
+                    </button>
+                    <button id="back-btn" class="pixel-btn bg-gray-800">
+                        🏠 返回主页
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 刀剑主题音效系统
+        const DarkAudio = {
+            audioContext: null,
+            speechSynthesis: window.speechSynthesis,
+
+            init() {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                // 预热语音合成
+                if (this.speechSynthesis) {
+                    const utterance = new SpeechSynthesisUtterance('');
+                    this.speechSynthesis.speak(utterance);
+                }
+            },
+
+            // 点击门的清脆刀剑相击声
+            playDoorClick() {
+                this.init();
+                // 主金属音
+                const osc1 = this.audioContext.createOscillator();
+                const gain1 = this.audioContext.createGain();
+                // 高频泛音
+                const osc2 = this.audioContext.createOscillator();
+                const gain2 = this.audioContext.createGain();
+
+                osc1.connect(gain1);
+                gain1.connect(this.audioContext.destination);
+                osc2.connect(gain2);
+                gain2.connect(this.audioContext.destination);
+
+                // 主音：中高频金属碰撞
+                osc1.type = 'triangle';
+                osc1.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+                osc1.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.15);
+
+                gain1.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+                gain1.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.15);
+
+                // 泛音：高频清脆感
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(2400, this.audioContext.currentTime);
+                osc2.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.1);
+
+                gain2.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+
+                osc1.start(this.audioContext.currentTime);
+                osc1.stop(this.audioContext.currentTime + 0.15);
+                osc2.start(this.audioContext.currentTime);
+                osc2.stop(this.audioContext.currentTime + 0.1);
+            },
+
+            // 揭示金币的清脆拔剑出鞘声
+            playReveal() {
+                this.init();
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                // 增加一点混响感的延迟
+                const delay = this.audioContext.createDelay(0.1);
+                const delayGain = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                gainNode.connect(delay);
+                delay.connect(delayGain);
+                delayGain.connect(this.audioContext.destination);
+
+                delay.delayTime.value = 0.05;
+                delayGain.gain.value = 0.3;
+
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, this.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1800, this.audioContext.currentTime + 0.3);
+
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.5);
+            },
+
+            // 获得金币的清脆刀剑轻击声
+            playCoin() {
+                this.init();
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(1500, this.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.1);
+
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.1);
+            },
+
+            // 胜利音效：三次渐高铃铃声 + Wonderful语音
+            playVictory() {
+                this.init();
+
+                // 播放铃铃的喜悦音效
+                const playBell = (time, pitch) => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(pitch, this.audioContext.currentTime + time);
+                    osc.frequency.exponentialRampToValueAtTime(pitch * 0.8, this.audioContext.currentTime + time + 0.3);
+
+                    gain.gain.setValueAtTime(0, this.audioContext.currentTime + time);
+                    gain.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + time + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + time + 0.3);
+
+                    osc.start(this.audioContext.currentTime + time);
+                    osc.stop(this.audioContext.currentTime + time + 0.3);
+                };
+
+                // 三次逐渐升高的铃声
+                playBell(0, 1200);
+                playBell(0.15, 1500);
+                playBell(0.3, 1800);
+
+                // 播放Wonderful语音
+                if (this.speechSynthesis) {
+                    const utterance = new SpeechSynthesisUtterance('Wonderful!');
+                    utterance.lang = 'en-US';
+                    utterance.rate = 1.2;
+                    utterance.pitch = 1.5;
+                    utterance.volume = 0.8;
+
+                    // 延迟播放语音与铃声配合
+                    setTimeout(() => {
+                        this.speechSynthesis.speak(utterance);
+                    }, 400);
+                }
+            },
+
+            // 游戏结束的中性音效
+            playGameOver() {
+                this.init();
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.8);
+
+                gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.8);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.8);
+            }
+        };
+
+        // 游戏状态
+        const gameState = {
+            clicksLeft: 100,
+            currentCoins: 0,
+            lastClickedDoor: null,
+            doorCoins: [0, 0, 0],
+            doorRevealed: [false, false, false],
+            gameActive: false,
+            leaderboard: []
+        };
+
+        // DOM元素
+        const elements = {
+            startScreen: document.getElementById('start-screen'),
+            gameScreen: document.getElementById('game-screen'),
+            gameOverOverlay: document.getElementById('game-over-overlay'),
+            clicksLeft: document.getElementById('clicks-left'),
+            currentCoins: document.getElementById('current-coins'),
+            finalCoins: document.getElementById('final-coins'),
+            gameResult: document.getElementById('game-result'),
+            gameHint: document.getElementById('game-hint'),
+            doors: document.querySelectorAll('.door'),
+            startBtn: document.getElementById('start-btn'),
+            endBtn: document.getElementById('end-btn'),
+            restartBtn: document.getElementById('restart-btn'),
+            backBtn: document.getElementById('back-btn'),
+            leaderboard: document.getElementById('leaderboard'),
+            particleContainer: document.getElementById('particle-container'),
+            fireworkContainer: document.getElementById('firework-container')
+        };
+
+        // 初始化游戏
+        function initGame() {
+            // 加载排行榜
+            loadLeaderboard();
+
+            // 事件监听
+            elements.startBtn.addEventListener('click', startGame);
+            elements.endBtn.addEventListener('click', endGame);
+            elements.restartBtn.addEventListener('click', restartGame);
+            elements.backBtn.addEventListener('click', backToHome);
+
+            elements.doors.forEach(door => {
+                door.addEventListener('click', handleDoorClick);
+            });
+        }
+
+        // 开始游戏
+        function startGame() {
+            // 重置游戏状态
+            gameState.clicksLeft = 100;
+            gameState.currentCoins = 0;
+            gameState.lastClickedDoor = null;
+            gameState.doorCoins = [0, 0, 0];
+            gameState.doorRevealed = [false, false, false];
+            gameState.gameActive = true;
+
+            // 生成随机金币数 (1-10之间)
+            for (let i = 0; i < 3; i++) {
+                gameState.doorCoins[i] = Math.floor(Math.random() * 10) + 1;
+            }
+
+            // 更新UI
+            updateUI();
+
+            // 切换界面
+            elements.startScreen.classList.add('hidden');
+            elements.gameScreen.classList.remove('hidden');
+            elements.gameOverOverlay.classList.remove('active');
+
+            // 重置门的状态
+            elements.doors.forEach((door, index) => {
+                door.classList.remove('door-revealed');
+                door.querySelector('.door-coin').classList.add('hidden');
+            });
+
+            elements.gameHint.textContent = '点击任意虚空之门开始探索！';
+        }
+
+        // 处理门点击
+        function handleDoorClick(e) {
+            if (!gameState.gameActive || gameState.clicksLeft <= 0) return;
+
+            const doorElement = e.currentTarget;
+            const doorIndex = parseInt(doorElement.dataset.door) - 1;
+
+            // 播放点击音效
+            DarkAudio.playDoorClick();
+
+            // 创建点击粒子效果
+            createClickParticles(e.clientX, e.clientY);
+
+            // 门震动效果
+            doorElement.classList.add('animate-shake');
+            setTimeout(() => {
+                doorElement.classList.remove('animate-shake');
+            }, 500);
+
+            // 检查是否连续点击同一个门
+            if (gameState.lastClickedDoor === doorIndex && !gameState.doorRevealed[doorIndex]) {
+                // 显示金币，消耗1次点击
+                gameState.clicksLeft--;
+                revealDoor(doorIndex, doorElement);
+            } else if (gameState.doorRevealed[doorIndex]) {
+                // 门已显示，直接获得金币
+                gameState.clicksLeft--;
+                const coins = gameState.doorCoins[doorIndex];
+                gameState.currentCoins += coins;
+
+                // 播放获得金币音效
+                DarkAudio.playCoin();
+
+                elements.gameHint.textContent = `获得 ${coins} 被诅咒的金币！`;
+
+                // 金币弹出效果
+                const coinElement = doorElement.querySelector('.door-coin');
+                coinElement.classList.add('animate-coin-pop');
+                setTimeout(() => {
+                    coinElement.classList.remove('animate-coin-pop');
+                }, 600);
+            } else {
+                // 第一次点击该门
+                gameState.clicksLeft--;
+                gameState.lastClickedDoor = doorIndex;
+                elements.gameHint.textContent = `再点击一次虚空之门 ${doorIndex + 1} 揭示金币数量（将消耗1次点击）`;
+            }
+
+            updateUI();
+
+            // 检查游戏是否结束
+            if (gameState.clicksLeft <= 0) {
+                endGame();
+            }
+        }
+
+        // 显示门的金币
+        function revealDoor(doorIndex, doorElement) {
+            gameState.doorRevealed[doorIndex] = true;
+            const coins = gameState.doorCoins[doorIndex];
+
+            // 播放揭示音效
+            DarkAudio.playReveal();
+
+            // 更新门的UI
+            doorElement.classList.add('door-revealed');
+            const coinElement = doorElement.querySelector('.door-coin');
+            coinElement.querySelector('.coin-value').textContent = coins;
+            coinElement.classList.remove('hidden');
+
+            // 获得第一次金币
+            gameState.currentCoins += coins;
+
+            elements.gameHint.textContent = `虚空之门 ${doorIndex + 1} 每次点击获得 ${coins} 被诅咒的金币！`;
+
+            // 创建暗黑烟花效果
+            createDarkFirework(doorElement.offsetLeft + doorElement.offsetWidth / 2, doorElement.offsetTop + doorElement.offsetHeight / 2);
+
+            // 播放多个烟花效果
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    createDarkFirework(
+                        doorElement.offsetLeft + Math.random() * doorElement.offsetWidth,
+                        doorElement.offsetTop + Math.random() * doorElement.offsetHeight
+                    );
+                }, i * 200);
+            }
+        }
+
+        // 更新UI
+        function updateUI() {
+            elements.clicksLeft.textContent = gameState.clicksLeft;
+            elements.currentCoins.textContent = gameState.currentCoins;
+        }
+
+        // 结束游戏
+        function endGame() {
+            if (!gameState.gameActive) return;
+
+            gameState.gameActive = false;
+
+            // 根据分数播放不同音效
+            if (gameState.currentCoins >= 400) {
+                // 优秀成绩播放胜利音效
+                DarkAudio.playVictory();
+            } else {
+                // 普通成绩播放结束音效
+                DarkAudio.playGameOver();
+            }
+
+            // 更新最终分数
+            elements.finalCoins.textContent = gameState.currentCoins;
+
+            // 生成结果信息
+            let resultMessage = '';
+            if (gameState.currentCoins >= 800) {
+                resultMessage = '你已经掌握了虚空的力量！策略大师！';
+            } else if (gameState.currentCoins >= 600) {
+                resultMessage = '非常优秀！你在虚空中游刃有余！';
+            } else if (gameState.currentCoins >= 400) {
+                resultMessage = '不错的成绩！继续探索虚空的奥秘！';
+            } else {
+                resultMessage = '虚空吞噬了你的大部分机会，再试一次吧！';
+            }
+
+            elements.gameResult.textContent = resultMessage;
+
+            // 保存成绩到排行榜
+            saveScore(gameState.currentCoins);
+
+            // 显示游戏结束界面
+            elements.gameOverOverlay.classList.add('active');
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            startGame();
+        }
+
+        // 返回主页
+        function backToHome() {
+            elements.gameOverOverlay.classList.remove('active');
+            elements.gameScreen.classList.add('hidden');
+            elements.startScreen.classList.remove('hidden');
+
+            // 更新排行榜
+            renderLeaderboard();
+        }
+
+        // 创建点击粒子效果（暗黑系）
+        function createClickParticles(x, y) {
+            const colors = ['#6a0dad', '#9932cc', '#1a0a2e', '#3d0c66', '#000000', '#b8860b'];
+
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.style.width = `${Math.random() * 8 + 4}px`;
+                particle.style.height = particle.style.width;
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 100 + 50;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+
+                elements.particleContainer.appendChild(particle);
+
+                // 粒子动画
+                let opacity = 1;
+                let posX = x;
+                let posY = y;
+
+                const animate = () => {
+                    posX += vx * 0.016;
+                    posY += vy * 0.016 + 2; // 重力
+                    opacity -= 0.02;
+
+                    particle.style.left = `${posX}px`;
+                    particle.style.top = `${posY}px`;
+                    particle.style.opacity = opacity;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        particle.remove();
+                    }
+                };
+
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // 创建暗黑烟花效果
+        function createDarkFirework(x, y) {
+            const colors = ['#6a0dad', '#9932cc', '#3d0c66', '#1a0a2e', '#b8860b', '#8b4513'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'firework-particle';
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.style.backgroundColor = color;
+                particle.style.boxShadow = `0 0 6px ${color}`;
+
+                const angle = (Math.PI * 2 / 30) * i;
+                const speed = Math.random() * 150 + 100;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+
+                elements.fireworkContainer.appendChild(particle);
+
+                // 烟花动画
+                let opacity = 1;
+                let posX = x;
+                let posY = y;
+                let time = 0;
+
+                const animate = () => {
+                    time += 0.016;
+                    posX += vx * 0.016;
+                    posY += vy * 0.016 + 50 * time * time; // 抛物线运动
+                    opacity -= 0.015;
+
+                    particle.style.left = `${posX}px`;
+                    particle.style.top = `${posY}px`;
+                    particle.style.opacity = opacity;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        particle.remove();
+                    }
+                };
+
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // 保存分数
+        function saveScore(score) {
+            const date = new Date().toLocaleString();
+            gameState.leaderboard.push({ score, date });
+
+            // 按分数排序
+            gameState.leaderboard.sort((a, b) => b.score - a.score);
+
+            // 只保留前10名
+            if (gameState.leaderboard.length > 10) {
+                gameState.leaderboard = gameState.leaderboard.slice(0, 10);
+            }
+
+            // 保存到本地存储
+            localStorage.setItem('voidCoinDoorLeaderboard', JSON.stringify(gameState.leaderboard));
+        }
+
+        // 加载排行榜
+        function loadLeaderboard() {
+            const saved = localStorage.getItem('voidCoinDoorLeaderboard');
+            if (saved) {
+                gameState.leaderboard = JSON.parse(saved);
+                renderLeaderboard();
+            }
+        }
+
+        // 渲染排行榜
+        function renderLeaderboard() {
+            if (gameState.leaderboard.length === 0) {
+                elements.leaderboard.innerHTML = `
+                    <div class="leaderboard-item">
+                        <span class="text-gray-400">暂无记录</span>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            gameState.leaderboard.forEach((item, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                html += `
+                    <div class="leaderboard-item flex justify-between items-center">
+                        <span>${medal} <span class="text-cursedGold font-bold">${item.score}</span> 金币</span>
+                        <span class="text-gray-500 text-sm">${item.date}</span>
+                    </div>
+                `;
+            });
+
+            elements.leaderboard.innerHTML = html;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+
+</html>
